@@ -20,7 +20,7 @@
     in {
       packages = {
         normalize = pkgs.stdenvNoCC.mkDerivation {
-          name = "whisper-normalize";
+          name = "normalize.sh";
           src = ./normalize;
           nativeBuildInputs = [pkgs.ffmpeg];
           buildInputs = [pkgs.makeWrapper];
