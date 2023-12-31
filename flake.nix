@@ -2,17 +2,17 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
-    model = {
-      url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin?download=true";
-      flake = false;
-    };
+# This one is too big to fit on my little server :( 
+    # model = {
+    #   url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin?download=true";
+    #   flake = false;
+    # };
   };
 
   outputs = inputs @ {
     self,
     flake-utils,
     nixpkgs,
-    model,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -50,7 +50,7 @@
             mkdir -p $out/bin
             cp ./main $out/bin/whisper-cpp-bin
             echo '#!/bin/sh' > $out/bin/whisper-cpp
-            echo "$out"'/bin/whisper-cpp-bin --model ${model} "$@"' >> $out/bin/whisper-cpp
+            echo "$out"'/bin/whisper-cpp-bin "$@"' >> $out/bin/whisper-cpp
             chmod a+x $out/bin/whisper-cpp
             cp ./stream $out/bin/whisper-cpp-stream
             cp models/download-ggml-model.sh $out/bin/whisper-cpp-download-ggml-model
