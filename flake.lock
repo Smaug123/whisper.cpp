@@ -21,13 +21,13 @@
     "model": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-aMuDhcvEaioTWn+LUcnxfAgs2VFbM8xBVVfdzx2Cu8I=",
+        "narHash": "sha256-CSrDFPoQgkvBW36keGkYpjxz740TBrCKVSxwSnfYvV8=",
         "type": "file",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin?download=true"
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin?download=true"
       },
       "original": {
         "type": "file",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin?download=true"
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin?download=true"
       }
     },
     "nixpkgs": {

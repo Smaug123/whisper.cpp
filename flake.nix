@@ -3,7 +3,7 @@
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     model = {
-      url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin?download=true";
+      url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin?download=true";
       flake = false;
     };
   };
