@@ -51,6 +51,7 @@
             cp ./main $out/bin/whisper-cpp-bin
             echo '#!/bin/sh' > $out/bin/whisper-cpp
             echo "$out"'/bin/whisper-cpp-bin --model ${model} "$@"' >> $out/bin/whisper-cpp
+            cp ./ggml-metal.metal $out/bin/ggml-metal.metal
             chmod a+x $out/bin/whisper-cpp
             cp ./stream $out/bin/whisper-cpp-stream
             cp models/download-ggml-model.sh $out/bin/whisper-cpp-download-ggml-model
