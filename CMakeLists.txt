@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.5)
 
-project(whisper.cpp VERSION 1.5.2)
+project(whisper.cpp VERSION 1.5.4)
 
 # Add path to modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -315,7 +315,8 @@ if (WHISPER_ALL_WARNINGS)
 endif()
 
 if (NOT MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror=vla")
+    # TODO: temporary disabled until we figure out ggml-metal.m
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror=vla")
     #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-math-errno -ffinite-math-only -funsafe-math-optimizations")
 endif()
 
@@ -344,8 +345,8 @@ else()
         endif()
     else()
         if (EMSCRIPTEN)
-            set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -pthread")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+            set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -pthread -s TOTAL_STACK=5242880")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -s TOTAL_STACK=5242880")
         else()
             if(NOT WHISPER_NO_AVX)
                 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx")
@@ -504,6 +505,7 @@ else()
 endif()
 
 if (BUILD_SHARED_LIBS)
+    set_target_properties(${TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TARGET} PUBLIC
         ${CMAKE_DL_LIBS}
         )

@@ -5,7 +5,7 @@
 # Usage:
 #
 #   $ cd /path/to/whisper.cpp
-#   $ ./extra/sync-ggml-am.sh
+#   $ ./extra/sync-ggml-am.sh -skip hash0,hash1,hash2...
 #
 
 set -e
@@ -24,10 +24,15 @@ fi
 lc=$(cat $SRC_WHISPER/extra/sync-ggml.last)
 echo "Syncing ggml changes since commit $lc"
 
+to_skip=""
+if [ "$1" == "-skip" ]; then
+    to_skip=$2
+fi
+
 cd $SRC_GGML
 
 git log --oneline $lc..HEAD
-git log --oneline $lc..HEAD | grep -v "(whisper/[0-9]*)" | cut -d' ' -f1 > $SRC_WHISPER/ggml-commits
+git log --oneline $lc..HEAD --reverse | grep -v "(whisper/[0-9]*)" | cut -d' ' -f1 > $SRC_WHISPER/ggml-commits
 
 if [ ! -s $SRC_WHISPER/ggml-commits ]; then
     rm -v $SRC_WHISPER/ggml-commits
@@ -40,6 +45,13 @@ if [ -f $SRC_WHISPER/ggml-src.patch ]; then
 fi
 
 while read c; do
+    if [ -n "$to_skip" ]; then
+        if [[ $to_skip == *"$c"* ]]; then
+            echo "Skipping $c"
+            continue
+        fi
+    fi
+
     git format-patch -k $c~1..$c --stdout -- \
         include/ggml/ggml*.h \
         src/ggml*.h \
@@ -48,11 +60,14 @@ while read c; do
         src/ggml*.m \
         src/ggml*.metal \
         src/ggml*.cu \
-        tests/test-opt.cpp \
-        tests/test-grad0.cpp \
-        tests/test-quantize-fns.cpp \
-        tests/test-quantize-perf.cpp \
-        tests/test-backend-ops.cpp \
+        examples/common.h \
+        examples/common.cpp \
+        examples/common-ggml.h \
+        examples/common-ggml.cpp \
+        examples/whisper/whisper.h \
+        examples/whisper/whisper.cpp \
+        examples/whisper/main.cpp \
+        examples/whisper/quantize.cpp \
         >> $SRC_WHISPER/ggml-src.patch
 done < $SRC_WHISPER/ggml-commits
 
@@ -87,7 +102,6 @@ if [ -f $SRC_WHISPER/ggml-src.patch ]; then
     # src/ggml-impl.h             -> ggml-impl.h
     # src/ggml-metal.h            -> ggml-metal.h
     # src/ggml-metal.m            -> ggml-metal.m
-    # src/ggml-metal.metal        -> ggml-metal.metal
     # src/ggml-mpi.h              -> ggml-mpi.h
     # src/ggml-mpi.c              -> ggml-mpi.c
     # src/ggml-opencl.cpp         -> ggml-opencl.cpp
@@ -118,7 +132,6 @@ if [ -f $SRC_WHISPER/ggml-src.patch ]; then
         -e 's/src\/ggml-impl\.h/ggml-impl.h/g' \
         -e 's/src\/ggml-metal\.h/ggml-metal.h/g' \
         -e 's/src\/ggml-metal\.m/ggml-metal.m/g' \
-        -e 's/src\/ggml-metal\.metal/ggml-metal.metal/g' \
         -e 's/src\/ggml-mpi\.h/ggml-mpi.h/g' \
         -e 's/src\/ggml-mpi\.c/ggml-mpi.c/g' \
         -e 's/src\/ggml-opencl\.cpp/ggml-opencl.cpp/g' \
