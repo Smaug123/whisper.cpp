@@ -1,28 +1,27 @@
 *.o
 *.a
+*.d
 .cache/
 .coreml/
 .test/
+.venv/
 .vs/
 .vscode/
 .DS_Store
+.vimspector.json
+/CMakeSettings.json
+/talk-llama.dSYM/
 
 build/
-build-coreml/
-build-em/
-build-debug/
-build-release/
-build-rwdi/
-build-static/
-build-cublas/
-build-no-accel/
-build-sanitize-addr/
-build-sanitize-thread/
+build-*/
 
 # SPM
 .build/
 .swiftpm
 *.metallib
+
+ggml-metal-embed.metal
+ggml-metal-embed.metal.tmp
 
 /main
 /stream
@@ -54,11 +53,11 @@ bindings/java/.gradle/
 bindings/java/.idea/
 .idea/
 
+result
 benchmark_results.csv
 cmake-build-debug/
 .cxx/
 .gradle/
 local.properties
 
-result
 *.wav

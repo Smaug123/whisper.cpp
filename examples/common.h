@@ -9,6 +9,7 @@
 #include <thread>
 #include <ctime>
 #include <fstream>
+#include <sstream>
 
 #define COMMON_SAMPLE_RATE 16000
 
@@ -21,7 +22,7 @@ struct gpt_params {
     int32_t n_threads    = std::min(4, (int32_t) std::thread::hardware_concurrency());
     int32_t n_predict    = 200;  // new tokens to predict
     int32_t n_parallel   = 1;    // number of parallel streams
-    int32_t n_batch      = 8;    // batch size for prompt processing
+    int32_t n_batch      = 32;   // batch size for prompt processing
     int32_t n_ctx        = 2048; // context size (this is the KV cache max size)
     int32_t n_gpu_layers = 0;    // number of layers to offlload to the GPU
 
@@ -135,7 +136,11 @@ gpt_vocab::id gpt_sample_top_k_top_p_repeat(
 // Audio utils
 //
 
+// Check if a buffer is a WAV audio file
+bool is_wav_buffer(const std::string buf);
+
 // Read WAV audio file and store the PCM data into pcmf32
+// fname can be a buffer of WAV data instead of a filename
 // The sample rate of the audio must be equal to COMMON_SAMPLE_RATE
 // If stereo flag is set and the audio has 2 channels, the pcmf32s will contain 2 channel PCM
 bool read_wav(
@@ -181,7 +186,7 @@ private:
     // It is assumed that PCM data is normalized to a range from -1 to 1
     bool write_audio(const float * data, size_t length) {
         for (size_t i = 0; i < length; ++i) {
-            const int16_t intSample = data[i] * 32767;
+            const int16_t intSample = int16_t(data[i] * 32767);
             file.write(reinterpret_cast<const char *>(&intSample), sizeof(int16_t));
             dataSize += sizeof(int16_t);
         }
@@ -277,3 +282,62 @@ struct sam_params {
 bool sam_params_parse(int argc, char ** argv, sam_params & params);
 
 void sam_print_usage(int argc, char ** argv, const sam_params & params);
+
+//
+// Terminal utils
+//
+
+#define SQR(X)    ((X) * (X))
+#define UNCUBE(x) x < 48 ? 0 : x < 115 ? 1 : (x - 35) / 40
+
+/**
+ * Quantizes 24-bit RGB to xterm256 code range [16,256).
+ */
+static int rgb2xterm256(int r, int g, int b) {
+    unsigned char cube[] = {0, 0137, 0207, 0257, 0327, 0377};
+    int av, ir, ig, ib, il, qr, qg, qb, ql;
+    av = r * .299 + g * .587 + b * .114 + .5;
+    ql = (il = av > 238 ? 23 : (av - 3) / 10) * 10 + 8;
+    qr = cube[(ir = UNCUBE(r))];
+    qg = cube[(ig = UNCUBE(g))];
+    qb = cube[(ib = UNCUBE(b))];
+    if (SQR(qr - r) + SQR(qg - g) + SQR(qb - b) <=
+        SQR(ql - r) + SQR(ql - g) + SQR(ql - b))
+        return ir * 36 + ig * 6 + ib + 020;
+    return il + 0350;
+}
+
+static std::string set_xterm256_foreground(int r, int g, int b) {
+    int x = rgb2xterm256(r, g, b);
+    std::ostringstream oss;
+    oss << "\033[38;5;" << x << "m";
+    return oss.str();
+}
+
+// Lowest is red, middle is yellow, highest is green. Color scheme from
+// Paul Tol; it is colorblind friendly https://personal.sron.nl/~pault/
+const std::vector<std::string> k_colors = {
+    set_xterm256_foreground(220,   5,  12),
+    set_xterm256_foreground(232,  96,  28),
+    set_xterm256_foreground(241, 147,  45),
+    set_xterm256_foreground(246, 193,  65),
+    set_xterm256_foreground(247, 240,  86),
+    set_xterm256_foreground(144, 201, 135),
+    set_xterm256_foreground( 78, 178, 101),
+};
+
+//
+// Other utils
+//
+
+// convert timestamp to string, 6000 -> 01:00.000
+std::string to_timestamp(int64_t t, bool comma = false);
+
+// given a timestamp get the sample
+int timestamp_to_sample(int64_t t, int n_samples, int whisper_sample_rate);
+
+// check if file exists using ifstream
+bool is_file_exist(const char *fileName);
+
+// write text to file, and call system("command voice_id file")
+bool speak_with_file(const std::string & command, const std::string & text, const std::string & path, int voice_id);
