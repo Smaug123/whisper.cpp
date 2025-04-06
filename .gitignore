@@ -61,3 +61,5 @@ cmake-build-debug/
 local.properties
 
 *.wav
+.log
+.exe

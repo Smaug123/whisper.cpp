@@ -18,6 +18,10 @@ const whisperParams = {
   translate: true,
   no_timestamps: false,
   audio_ctx: 0,
+  max_len: 0,
+  progress_callback: (progress) => {
+      console.log(`progress: ${progress}%`);
+    }
 };
 
 const arguments = process.argv.slice(2);

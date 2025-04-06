@@ -39,7 +39,7 @@
           stdenv.mkDerivation {
             name = "whisper-cpp";
             src = ./.;
-            buildInputs = [pkgs.makeWrapper pkgs.cmake pkgs.SDL2 pkgs.llvmPackages.openmp] ++ lib.optionals stdenv.isDarwin [pkgs.darwin.apple_sdk.frameworks.Accelerate pkgs.darwin.apple_sdk.frameworks.CoreGraphics pkgs.darwin.apple_sdk.frameworks.CoreVideo pkgs.darwin.apple_sdk.frameworks.MetalKit];
+            buildInputs = [pkgs.git pkgs.makeWrapper pkgs.cmake pkgs.SDL2 pkgs.llvmPackages.openmp] ++ lib.optionals stdenv.isDarwin [pkgs.darwin.apple_sdk.frameworks.Accelerate pkgs.darwin.apple_sdk.frameworks.CoreGraphics pkgs.darwin.apple_sdk.frameworks.CoreVideo pkgs.darwin.apple_sdk.frameworks.MetalKit];
 
             configurePhase = ''
               runHook preConfigure

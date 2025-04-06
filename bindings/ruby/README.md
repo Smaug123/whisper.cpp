@@ -22,16 +22,17 @@ Usage
 ```ruby
 require "whisper"
 
-whisper = Whisper::Context.new(Whisper::Model["base"])
+whisper = Whisper::Context.new("base")
 
-params = Whisper::Params.new
-params.language = "en"
-params.offset = 10_000
-params.duration = 60_000
-params.max_text_tokens = 300
-params.translate = true
-params.print_timestamps = false
-params.initial_prompt = "Initial prompt here."
+params = Whisper::Params.new(
+  language: "en",
+  offset: 10_000,
+  duration: 60_000,
+  max_text_tokens: 300,
+  translate: true,
+  print_timestamps: false,
+  initial_prompt: "Initial prompt here."
+)
 
 whisper.transcribe("path/to/audio.wav", params) do |whole_text|
   puts whole_text
@@ -44,20 +45,26 @@ end
 Some models are prepared up-front:
 
 ```ruby
-base_en = Whisper::Model["base.en"]
+base_en = Whisper::Model.pre_converted_models["base.en"]
 whisper = Whisper::Context.new(base_en)
 ```
 
 At first time you use a model, it is downloaded automatically. After that, downloaded cached file is used. To clear cache, call `#clear_cache`:
 
 ```ruby
-Whisper::Model["base"].clear_cache
+Whisper::Model.pre_converted_models["base"].clear_cache
 ```
 
-You can see the list of prepared model names by `Whisper::Model.preconverted_model_names`:
+You also can use shorthand for pre-converted models:
 
 ```ruby
-puts Whisper::Model.preconverted_model_names
+whisper = Whisper::Context.new("base.en")
+```
+
+You can see the list of prepared model names by `Whisper::Model.pre_converted_models.keys`:
+
+```ruby
+puts Whisper::Model.pre_converted_models.keys
 # tiny
 # tiny.en
 # tiny-q5_1
@@ -81,8 +88,9 @@ whisper = Whisper::Context.new("path/to/your/model.bin")
 Or, you can download model files:
 
 ```ruby
-model_uri = Whisper::Model::URI.new("http://example.net/uri/of/your/model.bin")
-whisper = Whisper::Context.new(model_uri)
+whisper = Whisper::Context.new("https://example.net/uri/of/your/model.bin")
+# Or
+whisper = Whisper::Context.new(URI("https://example.net/uri/of/your/model.bin"))
 ```
 
 See [models][] page for details.
@@ -106,31 +114,24 @@ def format_time(time_ms)
   "%02d:%02d:%02d.%03d" % [hour, min, sec, decimal_part]
 end
 
-whisper.transcribe("path/to/audio.wav", params)
-
-whisper.each_segment.with_index do |segment, index|
-  line = "[%{nth}: %{st} --> %{ed}] %{text}" % {
-    nth: index + 1,
-    st: format_time(segment.start_time),
-    ed: format_time(segment.end_time),
-    text: segment.text
-  }
-  line << " (speaker turned)" if segment.speaker_next_turn?
-  puts line
-end
+whisper
+  .transcribe("path/to/audio.wav", params)
+  .each_segment.with_index do |segment, index|
+    line = "[%{nth}: %{st} --> %{ed}] %{text}" % {
+      nth: index + 1,
+      st: format_time(segment.start_time),
+      ed: format_time(segment.end_time),
+      text: segment.text
+    }
+    line << " (speaker turned)" if segment.speaker_next_turn?
+    puts line
+  end
 
 ```
 
 You can also add hook to params called on new segment:
 
 ```ruby
-def format_time(time_ms)
-  sec, decimal_part = time_ms.divmod(1000)
-  min, sec = sec.divmod(60)
-  hour, min = min.divmod(60)
-  "%02d:%02d:%02d.%03d" % [hour, min, sec, decimal_part]
-end
-
 # Add hook before calling #transcribe
 params.on_new_segment do |segment|
   line = "[%{st} --> %{ed}] %{text}" % {
@@ -151,7 +152,7 @@ whisper.transcribe("path/to/audio.wav", params)
 You can see model information:
 
 ```ruby
-whisper = Whisper::Context.new(Whisper::Model["base"])
+whisper = Whisper::Context.new("base")
 model = whisper.model
 
 model.n_vocab # => 51864
@@ -200,7 +201,7 @@ Using this feature, you are also able to suppress log:
 Whisper.log_set ->(level, buffer, user_data) {
   # do nothing
 }, nil
-Whisper::Context.new(MODEL)
+Whisper::Context.new("base")
 ```
 
 ### Low-level API to transcribe ###
@@ -214,19 +215,31 @@ require "wavefile"
 reader = WaveFile::Reader.new("path/to/audio.wav", WaveFile::Format.new(:mono, :float, 16000))
 samples = reader.enum_for(:each_buffer).map(&:samples).flatten
 
-whisper = Whisper::Context.new(Whisper::Model["base"])
-whisper.full(Whisper::Params.new, samples)
-whisper.each_segment do |segment|
-  puts segment.text
-end
+whisper = Whisper::Context.new("base")
+whisper
+  .full(Whisper::Params.new, samples)
+  .each_segment do |segment|
+    puts segment.text
+  end
 ```
 
-The second argument `samples` may be an array, an object with `length` method, or a MemoryView. If you can prepare audio data as C array and export it as a MemoryView, whispercpp accepts and works with it with zero copy.
+The second argument `samples` may be an array, an object with `length` and `each` method, or a MemoryView. If you can prepare audio data as C array and export it as a MemoryView, whispercpp accepts and works with it with zero copy.
+
+Development
+-----------
+
+    % git clone https://github.com/ggml-org/whisper.cpp.git
+    % cd whisper.cpp/bindings/ruby
+    % rake test
+
+First call of `rake test` builds an extension and downloads a model for testing. After that, you add tests in `tests` directory and modify `ext/ruby_whisper.cpp`.
+
+If something seems wrong on build, running `rake clean` solves some cases.
 
 License
 -------
 
 The same to [whisper.cpp][].
 
-[whisper.cpp]: https://github.com/ggerganov/whisper.cpp
-[models]: https://github.com/ggerganov/whisper.cpp/tree/master/models
+[whisper.cpp]: https://github.com/ggml-org/whisper.cpp
+[models]: https://github.com/ggml-org/whisper.cpp/tree/master/models

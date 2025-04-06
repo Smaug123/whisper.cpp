@@ -21,7 +21,6 @@ if (NOT GGML_HOME)
         SOURCE_FILES
         ${SOURCE_FILES}
         ${WHISPER_LIB_DIR}/ggml/src/ggml.c
-        ${WHISPER_LIB_DIR}/ggml/src/ggml-aarch64.c
         ${WHISPER_LIB_DIR}/ggml/src/ggml-alloc.c
         ${WHISPER_LIB_DIR}/ggml/src/ggml-backend.cpp
         ${WHISPER_LIB_DIR}/ggml/src/ggml-backend-reg.cpp
@@ -29,8 +28,14 @@ if (NOT GGML_HOME)
         ${WHISPER_LIB_DIR}/ggml/src/ggml-threading.cpp
         ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu.c
         ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu.cpp
-        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu-aarch64.c
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu-aarch64.cpp
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu-hbm.cpp
         ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu-quants.c
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ggml-cpu-traits.cpp
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/unary-ops.cpp
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/binary-ops.cpp
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/vec.cpp
+        ${WHISPER_LIB_DIR}/ggml/src/ggml-cpu/ops.cpp
         )
 endif()
 
@@ -42,6 +47,8 @@ function(build_library target_name)
         SHARED
         ${SOURCE_FILES}
     )
+
+    target_compile_definitions(${target_name} PUBLIC GGML_USE_CPU)
 
     if (${target_name} STREQUAL "whisper_v8fp16_va")
         target_compile_options(${target_name} PRIVATE -march=armv8.2-a+fp16)

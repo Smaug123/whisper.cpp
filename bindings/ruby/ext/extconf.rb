@@ -35,7 +35,7 @@ if $GGML_METAL
   $GGML_METAL_EMBED_LIBRARY = true
 end
 
-$MK_CPPFLAGS = '-Iggml/include -Iggml/src -Iggml/src/ggml-cpu -Iinclude -Isrc -Iexamples'
+$MK_CPPFLAGS = '-Iggml/include -Iggml/src -Iggml/src/ggml-cpu -Iinclude -Isrc -Iexamples -DGGML_USE_CPU'
 $MK_CFLAGS   = '-std=c11   -fPIC'
 $MK_CXXFLAGS = '-std=c++17 -fPIC'
 $MK_NVCCFLAGS = '-std=c++17'
@@ -111,11 +111,6 @@ unless ENV['RISCV']
     $MK_CFLAGS     << ' -march=native -mtune=native'
     $HOST_CXXFLAGS << ' -march=native -mtune=native'
   end
-
-  if $UNAME_M.match? /aarch64.*/
-    $MK_CFLAGS   << ' -mcpu=native'
-    $MK_CXXFLAGS << ' -mcpu=native'
-  end
 else
   $MK_CFLAGS   << ' -march=rv64gcv -mabi=lp64d'
   $MK_CXXFLAGS << ' -march=rv64gcv -mabi=lp64d'
@@ -162,7 +157,6 @@ end
 
 $OBJ_GGML <<
   'ggml/src/ggml.o' <<
-  'ggml/src/ggml-aarch64.o' <<
   'ggml/src/ggml-alloc.o' <<
   'ggml/src/ggml-backend.o' <<
   'ggml/src/ggml-backend-reg.o' <<
@@ -172,13 +166,28 @@ $OBJ_GGML <<
   'ggml/src/ggml-cpu/ggml-cpu.o' <<
   'ggml/src/ggml-cpu/ggml-cpu-cpp.o' <<
   'ggml/src/ggml-cpu/ggml-cpu-aarch64.o' <<
-  'ggml/src/ggml-cpu/ggml-cpu-quants.o'
+  'ggml/src/ggml-cpu/ggml-cpu-hbm.o' <<
+  'ggml/src/ggml-cpu/ggml-cpu-quants.o' <<
+  'ggml/src/ggml-cpu/ggml-cpu-traits.o' <<
+  'ggml/src/ggml-cpu/unary-ops.o' <<
+  'ggml/src/ggml-cpu/binary-ops.o' <<
+  'ggml/src/ggml-cpu/vec.o' <<
+  'ggml/src/ggml-cpu/ops.o'
 
 $OBJ_WHISPER <<
-  'src/whisper.o'
+  'src/whisper.o' <<
+  'examples/common.o' <<
+  'examples/common-whisper.o'
 
 $objs = $OBJ_GGML + $OBJ_WHISPER + $OBJ_COMMON + $OBJ_SDL
-$objs << "ruby_whisper.o"
+$objs <<
+  "ruby_whisper.o" <<
+  "ruby_whisper_context.o" <<
+  "ruby_whisper_transcribe.o" <<
+  "ruby_whisper_params.o" <<
+  "ruby_whisper_error.o" <<
+  "ruby_whisper_segment.o" <<
+  "ruby_whisper_model.o"
 
 $CPPFLAGS  = "#{$MK_CPPFLAGS} #{$CPPFLAGS}"
 $CFLAGS    = "#{$CPPFLAGS} #{$MK_CFLAGS} #{$GF_CFLAGS} #{$CFLAGS}"

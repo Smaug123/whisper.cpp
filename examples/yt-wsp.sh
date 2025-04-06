@@ -25,12 +25,12 @@
 # SOFTWARE.
 
 # Small shell script to more easily automatically download and transcribe live stream VODs.
-# This uses YT-DLP, ffmpeg and the CPP version of Whisper: https://github.com/ggerganov/whisper.cpp
+# This uses YT-DLP, ffmpeg and the CPP version of Whisper: https://github.com/ggml-org/whisper.cpp
 # Use `./examples/yt-wsp.sh help` to print help info.
 #
 # Sample usage:
 #
-#   git clone https://github.com/ggerganov/whisper.cpp
+#   git clone https://github.com/ggml-org/whisper.cpp
 #   cd whisper.cpp
 #   make
 #   ./examples/yt-wsp.sh https://www.youtube.com/watch?v=1234567890
@@ -44,7 +44,7 @@ SCRIPT_DIR="${SCRIPT_PATH%/*}"
 
 ################################################################################
 # Documentation on downloading models can be found in the whisper.cpp repo:
-# https://github.com/ggerganov/whisper.cpp/#usage
+# https://github.com/ggml-org/whisper.cpp/#usage
 #
 # note: unless a multilingual model is specified, WHISPER_LANG will be ignored
 # and the video will be transcribed as if the audio were in the English language
@@ -55,7 +55,7 @@ MODEL_PATH="${MODEL_PATH:-${SCRIPT_DIR}/../models/ggml-base.en.bin}"
 # Where to find the whisper.cpp executable.  default to the examples directory
 # which holds this script in source control
 ################################################################################
-WHISPER_EXECUTABLE="${WHISPER_EXECUTABLE:-${SCRIPT_DIR}/../main}";
+WHISPER_EXECUTABLE="${WHISPER_EXECUTABLE:-${SCRIPT_DIR}/../build/bin/whisper-cli}";
 
 # Set to desired language to be translated into english
 WHISPER_LANG="${WHISPER_LANG:-en}";
@@ -103,10 +103,10 @@ check_requirements() {
     fi;
 
     if ! command -v "${WHISPER_EXECUTABLE}" &>/dev/null; then
-        echo "The C++ implementation of Whisper is required: https://github.com/ggerganov/whisper.cpp"
+        echo "The C++ implementation of Whisper is required: https://github.com/ggml-org/whisper.cpp"
         echo "Sample usage:";
         echo "";
-        echo "  git clone https://github.com/ggerganov/whisper.cpp";
+        echo "  git clone https://github.com/ggml-org/whisper.cpp";
         echo "  cd whisper.cpp";
         echo "  make";
         echo "  ./examples/yt-wsp.sh https://www.youtube.com/watch?v=1234567890";

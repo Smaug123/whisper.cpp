@@ -1,14 +1,11 @@
-require "test/unit"
-require "whisper"
+require_relative "helper"
 
-class TestCallback < Test::Unit::TestCase
-  TOPDIR = File.expand_path(File.join(File.dirname(__FILE__), '..'))
-
+class TestCallback < TestBase
   def setup
     GC.start
     @params = Whisper::Params.new
-    @whisper = Whisper::Context.new(File.join(TOPDIR, '..', '..', 'models', 'ggml-base.en.bin'))
-    @audio = File.join(TOPDIR, '..', '..', 'samples', 'jfk.wav')
+    @whisper = Whisper::Context.new("base.en")
+    @audio = File.join(AUDIO)
   end
 
   def test_new_segment_callback
@@ -28,7 +25,7 @@ class TestCallback < Test::Unit::TestCase
         assert start_time >= 0
         assert_kind_of Integer, end_time
         assert end_time > 0
-        assert_match /ask not what your country can do for you, ask what you can do for your country/, text if i_segment == 0
+        assert_match(/ask not what your country can do for you, ask what you can do for your country/, text) if i_segment == 0
       end
     }
 
@@ -148,9 +145,9 @@ class TestCallback < Test::Unit::TestCase
 
   def test_abort_on
     do_abort = false
-    aborted_from_callback = false
+    _aborted_from_callback = false
     @params.on_new_segment do |segment|
-      do_abort = true if segment.text.match? /ask/
+      do_abort = true if segment.text.match?(/ask/)
     end
     i = 0
     @params.abort_on do

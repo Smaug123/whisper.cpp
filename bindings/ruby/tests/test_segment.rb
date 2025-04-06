@@ -1,17 +1,6 @@
 require_relative "helper"
 
 class TestSegment < TestBase
-  class << self
-    attr_reader :whisper
-
-    def startup
-      @whisper = Whisper::Context.new(TestBase::MODEL)
-      params = Whisper::Params.new
-      params.print_timestamps = false
-      @whisper.transcribe(TestBase::AUDIO, params)
-    end
-  end
-
   def test_iteration
     whisper.each_segment do |segment|
       assert_instance_of Whisper::Segment, segment
@@ -43,6 +32,14 @@ class TestSegment < TestBase
     end
   end
 
+  def test_no_speech_prob
+    no_speech_prob = nil
+    whisper.each_segment do |segment|
+      no_speech_prob = segment.no_speech_prob
+    end
+    assert no_speech_prob > 0.0
+  end
+
   def test_on_new_segment
     params = Whisper::Params.new
     seg = nil
@@ -52,13 +49,13 @@ class TestSegment < TestBase
       if index == 0
         seg = segment
         assert_equal 0, segment.start_time
-        assert_match /ask not what your country can do for you, ask what you can do for your country/, segment.text
+        assert_match(/ask not what your country can do for you, ask what you can do for your country/, segment.text)
       end
       index += 1
     end
     whisper.transcribe(AUDIO, params)
     assert_equal 0, seg.start_time
-    assert_match /ask not what your country can do for you, ask what you can do for your country/, seg.text
+    assert_match(/ask not what your country can do for you, ask what you can do for your country/, seg.text)
   end
 
   def test_on_new_segment_twice
@@ -73,11 +70,5 @@ class TestSegment < TestBase
       return
     end
     whisper.transcribe(AUDIO, params)
-  end
-
-  private
-
-  def whisper
-    self.class.whisper
   end
 end
